@@ -3,42 +3,11 @@
 // Include all our protocol data structs
 #include "protocols/ethernet.hpp"
 #include "protocols/ipv4.hpp" // We will create this next
+#include "protocols/ipv6.hpp" // And this after
 #include "protocols/tcp.hpp"  // And this after
 
 // System headers for byte manipulation
 #include <arpa/inet.h> // For ntohs() (Network to Host Short)
-#include <iomanip>     // For formatting hex
-#include <sstream>     // For building MAC/IP strings
-
-// --- Helper Functions for Manual Parsing ---
-
-/**
- * @brief Converts 6 bytes of a MAC address to a string.
- */
-std::string mac_to_string(const unsigned char *mac_bytes) {
-  std::stringstream ss;
-  ss << std::hex << std::setfill('0');
-  for (int i = 0; i < 6; ++i) {
-    ss << std::setw(2) << static_cast<int>(mac_bytes[i]);
-    if (i < 5)
-      ss << ":";
-  }
-  return ss.str();
-}
-
-/**
- * @brief (Helper for you) Converts 4 bytes of an IP address to a string.
- */
-std::string ip_to_string(const unsigned char *ip_bytes) {
-  std::stringstream ss;
-  ss << std::dec;
-  for (int i = 0; i < 4; ++i) {
-    ss << static_cast<int>(ip_bytes[i]);
-    if (i < 3)
-      ss << ".";
-  }
-  return ss.str();
-}
 
 // --- Public Decoder Methods ---
 
@@ -55,35 +24,26 @@ std::unique_ptr<BaseProtocol> Decoder::decodePacket(std::string_view data) {
  * THIS IS WHERE YOU LEARN MANUAL PARSING.
  */
 std::unique_ptr<BaseProtocol> Decoder::parse_ethernet(std::string_view &data) {
-  // An Ethernet header is 14 bytes. Check if we have enough data.
-  if (data.length() < 14) {
-    return nullptr; // Not a valid packet
+  if (data.length() < Ethernet::HEADER_SIZE) {
+    return nullptr;
   }
 
-  // Create the C++ object to store our data
   auto eth = std::make_unique<Ethernet>();
-
-  // Get a C-style pointer to the raw byte data
   const unsigned char *bytes =
       reinterpret_cast<const unsigned char *>(data.data());
 
-  // --- MANUAL PARSING ---
+  // --- NEW, CLEANER PARSING ---
   // 1. Destination MAC (First 6 bytes)
-  eth->dest_mac = mac_to_string(bytes);
+  eth->dest_mac = MacAddress(bytes);
 
   // 2. Source MAC (Next 6 bytes)
-  eth->source_mac = mac_to_string(bytes + 6);
+  eth->source_mac = MacAddress(bytes + MacAddress::LENGTH);
+  // --- END NEW PARSING ---
 
-  // 3. EtherType (Last 2 bytes)
-  // We must use ntohs() (Network To Host Short) because the packet
-  // data is in "Network Byte Order" (Big Endian), and our
-  // computers (x86) are "Host Byte Order" (Little Endian).
-  eth->eth_type = ntohs(*reinterpret_cast<const uint16_t *>(bytes + 12));
-  // --- END MANUAL PARSING ---
+  eth->eth_type = ntohs(
+      *reinterpret_cast<const uint16_t *>(bytes + Ethernet::ETH_TYPE_OFFSET));
 
-  // **CRITICAL STEP**: "Consume" the 14 bytes we just parsed
-  // from the string_view. The view now points to the L3 payload.
-  data.remove_prefix(14);
+  data.remove_prefix(Ethernet::HEADER_SIZE);
 
   // --- CHAIN OF RESPONSIBILITY ---
   // Look at the EtherType to decide which parser to call next.
@@ -92,9 +52,9 @@ std::unique_ptr<BaseProtocol> Decoder::parse_ethernet(std::string_view &data) {
     eth->payload = parse_ipv4(data); // Call the L3 parser
     break;
 
-    // case Ethernet::ETH_TYPE_IPV6: // 0x86DD
-    //     eth->payload = parse_ipv6(data); // (You can add this later)
-    //     break;
+  case Ethernet::ETH_TYPE_IPV6:      // 0x86DD
+    eth->payload = parse_ipv6(data); // (You can add this later)
+    break;
 
   default:
     // We don't know this L3 protocol. Stop parsing
@@ -158,4 +118,28 @@ std::unique_ptr<BaseProtocol> Decoder::parse_tcp(std::string_view &data) {
       std::make_unique<TCP>(); // (This won't compile until you create the file)
   tcp->raw_payload = data;
   return tcp;
+}
+
+std::unique_ptr<BaseProtocol> Decoder::parse_ipv6(std::string_view &data) {
+  // YOUR TODO:
+  // 1. Create `include/protocols/ipv6.hpp` (like we did for IPv4)
+  //    It needs fields for: version, traffic_class, flow_label,
+  //    payload_length, next_header, hop_limit, source_ip, dest_ip, etc.
+  // 2. An IPv6 header is 40 bytes. Check data.length().
+  // 3. Create `auto ipv6 = std::make_unique<IPv6>();`
+  // 4. Parse all the fields. Use ntohs() for 16-bit fields.
+  // 5. Consume 40 bytes from the data (data.remove_prefix(40)).
+  // 6. Use a `switch(ipv6->next_header)` to call the next parser:
+  //    case 6: // TCP
+  //        ipv6->payload = parse_tcp(data);
+  //        break;
+  //    case 17: // UDP
+  //        // ipv6->payload = parse_udp(data);
+  //        break;
+
+  // For now, we'll just set the raw payload and return
+  auto ipv6 = std::make_unique<IPv6>(); // (This won't compile until you create
+                                        // the file)
+  ipv6->raw_payload = data;
+  return ipv6;
 }

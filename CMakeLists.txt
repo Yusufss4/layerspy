@@ -12,6 +12,7 @@ set(PROJECT_WARNINGS
     -Wnon-virtual-dtor
     -Werror
 )
+
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fsanitize=address -fsanitize=undefined" CACHE STRING "Flags used by the C++ compiler for debug builds" FORCE)
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG" CACHE STRING "Flags used by the C++ compiler for release builds" FORCE)
 
@@ -31,7 +32,11 @@ if(NOT PCAP_FOUND)
     message(FATAL_ERROR "Could not find libpcap (PCAP). Please install libpcap-dev or set CMAKE_PREFIX_PATH/PCAP_DIR.")
 endif()
 
-file(GLOB_RECURSE CORE_SOURCES "src/*.cpp" "src/protocols/*.cpp")
+file(GLOB_RECURSE CORE_SOURCES
+    "src/*.cpp"
+    "src/protocols/*.cpp"
+    "src/types/*.cpp"
+)
 add_library(layerspy_lib ${CORE_SOURCES})
 target_compile_options(layerspy_lib PRIVATE ${PROJECT_WARNINGS})
 
@@ -58,4 +63,3 @@ target_link_libraries(layerspy_test PRIVATE layerspy_lib Catch2::Catch2WithMain)
 include(CTest)
 include(Catch)
 catch_discover_tests(layerspy_test)
-add_test(NAME layerspy_test COMMAND layerspy_test)

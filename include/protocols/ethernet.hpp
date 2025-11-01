@@ -1,19 +1,22 @@
 #pragma once
 #include "base_protocol.hpp"
-#include <cstdint> // For uint16_t, etc.
+#include "types/mac_address.hpp"
+#include <cstdint>
 #include <string>
 
 /**
  * @brief Holds data for an Ethernet II frame.
  */
 struct Ethernet : BaseProtocol {
-  std::string dest_mac;
-  std::string source_mac;
-  uint16_t eth_type; // e.g., 0x0800 for IPv4
+  MacAddress dest_mac;
+  MacAddress source_mac;
+  uint16_t eth_type;
 
-  // EtherType constants for our parser chain
   inline static const uint16_t ETH_TYPE_IPV4 = 0x0800;
   inline static const uint16_t ETH_TYPE_IPV6 = 0x86DD;
+
+  inline static constexpr std::size_t HEADER_SIZE = 14; // 6+6+2
+  inline static constexpr std::size_t ETH_TYPE_OFFSET = 12;
 
   std::string get_name() const override { return "Ethernet II"; }
 };

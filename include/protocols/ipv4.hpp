@@ -1,5 +1,6 @@
 #pragma once
 #include "base_protocol.hpp"
+#include "types/ipv4_address.hpp"
 #include <cstdint>
 #include <string>
 
@@ -25,8 +26,8 @@ struct IPv4 : BaseProtocol {
   uint8_t protocol; // 6 = TCP, 17 = UDP, 1 = ICMP, etc.
   uint16_t header_checksum;
 
-  std::string src_ip; // dotted decimal "192.168.1.10"
-  std::string dst_ip; // dotted decimal "93.184.216.34"
+  Ipv4Address source_ip; // Source IPv4 address
+  Ipv4Address dest_ip;   // Destination IPv4 address
 
   // For chaining
   inline static const uint8_t PROTO_TCP = 6;

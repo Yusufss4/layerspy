@@ -29,7 +29,10 @@ private:
 
   std::unique_ptr<BaseProtocol> parse_ethernet(std::string_view &data);
   std::unique_ptr<BaseProtocol> parse_ipv4(std::string_view &data);
+  std::unique_ptr<BaseProtocol> parse_ipv6(std::string_view &data);
   std::unique_ptr<BaseProtocol> parse_tcp(std::string_view &data);
+  std::unique_ptr<BaseProtocol> parse_udp(std::string_view &data);
+  std::unique_ptr<BaseProtocol> parse_icmp(std::string_view &data);
+  std::unique_ptr<BaseProtocol> parse_http(std::string_view &data);
 
-  // ... You will add parse_udp, parse_icmp, etc. here ...
 };

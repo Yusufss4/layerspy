@@ -5,9 +5,6 @@
 
 /**
  * @brief Base struct for all parsed protocol headers.
- * * This is the "interface" that allows us to chain protocols together.
- * Each protocol (Ethernet, IPv4, TCP) will have its own struct that
- * inherits from this.
  */
 struct BaseProtocol {
   // Virtual destructor for correct polymorphic cleanup
