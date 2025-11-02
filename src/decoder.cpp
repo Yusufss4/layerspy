@@ -71,27 +71,17 @@ std::unique_ptr<BaseProtocol> Decoder::parse_ethernet(std::string_view &data) {
  * This is your next task!
  */
 std::unique_ptr<BaseProtocol> Decoder::parse_ipv4(std::string_view &data) {
-  // YOUR TODO:
-  // 1. Create `include/protocols/ipv4.hpp` (like we did for Ethernet)
-  //    It needs fields for: version, IHL, total_length, protocol,
-  //    source_ip, dest_ip, etc.
-  // 2. An IPv4 header is *at least* 20 bytes. Check data.length().
-  // 3. Create `auto ipv4 = std::make_unique<IPv4>();`
-  // 4. Parse all the fields. Use ntohs() for 16-bit fields.
-  // 5. **IMPORTANT**: Get the IHL (Internet Header Length) field.
-  //    The header length is `ihl * 4` bytes!
-  // 6. Consume `ihl * 4` bytes from the data (data.remove_prefix(...)).
-  // 7. Use a `switch(ipv4->protocol)` to call the next parser:
-  //    case 6: // TCP
-  //        ipv4->payload = parse_tcp(data);
-  //        break;
-  //    case 17: // UDP
-  //        // ipv4->payload = parse_udp(data);
-  //        break;
+  if(data.length() < IPv4::MIN_HEADER_SIZE) {
+    return nullptr;
+  }
+
+  auto ipv4 = std::make_unique<IPv4>();
+  const unsigned char *bytes =
+      reinterpret_cast<const unsigned char *>(data.data());
+
+  
 
   // For now, we'll just set the raw payload and return
-  auto ipv4 = std::make_unique<IPv4>(); // (This won't compile until you create
-                                        // the file)
   ipv4->raw_payload = data;
   return ipv4;
 }
